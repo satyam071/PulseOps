@@ -1,10 +1,10 @@
 const axios = require("axios");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
-// const { encrypt } = require("../utils/crypto");
-const User  = require("../models/user.model")
+const { encrypt } = require("../utils/crypto");
+const User = require("../models/user.model");
 
- const github = async (req, res) => {
+const github = async (req, res) => {
   try {
     const url =
       `https://github.com/login/oauth/authorize` +
@@ -16,8 +16,7 @@ const User  = require("../models/user.model")
   }
 };
 
-
- const githubCallback = async (req, res) => {
+const githubCallback = async (req, res) => {
   const { code } = req.query;
 
   try {
@@ -40,57 +39,59 @@ const User  = require("../models/user.model")
         },
       },
     );
-    if (response.status != 200) {
+    const accessToken = await response.data.access_token;
+    if (!accessToken) {
       return res.send(400).json({
         message: "Token not found",
       });
     }
 
-    const accessToken = await response.data.access_token;
-    console.log(accessToken)
+    console.log(accessToken);
 
     //Get user's profile
 
-    const {data:profile}  = await axios.get("https://api.github.com/user",{
-      headers: { Authorization : `Bearer ${accessToken}`},
+    const { data: profile } = await axios.get("https://api.github.com/user", {
+      headers: { Authorization: `Bearer ${accessToken}` },
     });
 
-    let user = await User.findOne( { githubId : profile.id });
-    if(!user){
-      user = await User.create({
-        githubId:profile.id,
-        username:profile.login,
-        name:profile.name,
-        avatar:profile.avatar_url
-        // accessToken:encrypt(accessToken)
-
-      })
-    }
-
-    const token = jwt.sign(
-      {id:user._id}, 
-      process.env.JWT_SECRET,
+    let user = await User.findOneAndUpdate(
+      { githubId: String(profile.id) },
       {
-        expiresIn:"7d"
-      }
+        $set: {
+          username: profile.login,
+          name: profile.name,
+          avatar: profile.avatar_url,
+          githubToken: encrypt(accessToken), // must match your schema field
+        },
+      },
+      { upsert: true, new: true, setDefaultsOnInsert: true },
     );
+    // if (!user) {
+    //   user = await User.create({
+    //     githubId: profile.id,
+    //     username: profile.login,
+    //     name: profile.name,
+    //     avatar: profile.avatar_url,
+    //     accessToken: encrypt(accessToken),
+    //   });
+    // }
 
-    res.cookie("token",token,{
-      httpOnly:true,
-    })
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+      expiresIn: "7d",
+    });
+
+    res.cookie("token", token, {
+      httpOnly: true,
+    });
 
     // res.redirect(`${process.env.FRONTEND_URL}/dashboard`)
     res.json({
-      message:"User Fetched",
-      user
-    })
-
-    
-
+      message: "User Fetched",
+      user,
+    });
   } catch (err) {
     console.error(err.response?.data || err.message);
-    res.status(500).json({ message: "Error occurred" })
-
+    res.status(500).json({ message: "Error occurred" });
   }
 };
 

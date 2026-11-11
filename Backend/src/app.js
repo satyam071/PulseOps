@@ -5,6 +5,7 @@ const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const authRoutes   = require("./routes/auth.route")
 const userRoutes =require("./routes/user.route")
+const repoRoutes = require("./routes/repos.route")
 
 
 app.use(
@@ -20,6 +21,7 @@ app.use(cookieParser());
 
 app.use("/api/auth",authRoutes);
 app.use("/api",userRoutes);
+app.use("/api",repoRoutes);
 
 
 module.exports = app;

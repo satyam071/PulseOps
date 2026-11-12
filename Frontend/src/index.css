@@ -1,0 +1,22 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-jakarta: 'Plus Jakarta Sans', sans-serif;
+
+  --color-primary: #7C3AED;
+  --color-primary-dark: #2E1065;
+  --color-primary-mid: #A855F7;
+  --color-primary-light: #EDE9FE;
+  --color-success: #16A34A;
+  --color-success-bg: #DCFCE7;
+  --color-warning: #F59E0B;
+  --color-warning-bg: #FEF3C7;
+  --color-app-bg: #F8F8FC;
+  --color-ink: #1F1B2E;
+  --color-muted: #6B7280;
+}
+
+body {
+  font-family: var(--font-jakarta);
+}
